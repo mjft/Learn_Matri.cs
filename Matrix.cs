@@ -1,23 +1,25 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections;
 using System.IO;
 
-namespace 测方向三角网_间接平差
+namespace 测方向三角网_间接平差//命名空间（使用对象）
 {
-    public class Matrix
+    public class Matrix//类的名字
     {
-        public double[] element = null;
-        private int rows = 0;
-        private int cols = 0;
+        //命名属性
+        
+        public double[] element = null;//元素
+        private int rows = 0;//row行
+        private int cols = 0;//column列
         private double eps = 0.0;
-        public int Rows
+        public int Rows//一个只可读的变量，get就是可读，set就是可写
         {
             get
             {
-                return rows;
+                return rows;//读取时返回rows的值
             }
         }
         public int Cols
@@ -27,7 +29,7 @@ namespace 测方向三角网_间接平差
                 return cols;
             }
         }
-        public double Eps
+        public double Eps//可读也可写
         {
             get
             {
@@ -38,9 +40,12 @@ namespace 测方向三角网_间接平差
                 eps = value;
             }
         }
-        public double this[int i, int j]
+        
+        //索引器
+        
+        public double this[int i, int j]//因为矩阵使用二维坐标，但存储时用的是一维数组，所以需要索引器
         {
-            get
+            get//使用this读取时将this显示的二维坐标转化为储存时使用的一维，并添加越界提醒功能
             {
                 if (i < Rows && j < Cols)
                 {
@@ -51,12 +56,12 @@ namespace 测方向三角网_间接平差
                     throw new Exception("索引越界！");
                 }
             }
-            set
+            set//写入this时同样将this显示的二维坐标转化为储存时使用的一维
             {
                 element[i * cols + j] = value;
             }
         }
-        //"+"的重载
+        //"+"的重载，"+"本身是十进制运算，重载为矩阵运算，operator
         public static Matrix operator +(Matrix m1, Matrix m2)
         {
             return m1.Add(m2);
@@ -74,6 +79,7 @@ namespace 测方向三角网_间接平差
             return m1.Multiply(m2);
         }
 
+        //重写Tostring()
         public override string ToString()
         {
             return ToString(",", true);
@@ -81,13 +87,13 @@ namespace 测方向三角网_间接平差
 
         public string ToString(string sDelim, bool bLineBreak)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();//StringBuilder是可变的字符串
             for (int i = 0; i < rows; i++)
             {
                 string s = "";
                 for (int j = 0; j < cols; ++j)
                 {
-                    s += GetElement(i, j).ToString();
+                    s += GetElement(i, j).ToString();//不懂，重写的ToString()返回时用的是本函数ToString(,)，这不是无限循环了吗
                     if (bLineBreak)
                     {
                         if (j != cols - 1)
@@ -99,34 +105,34 @@ namespace 测方向三角网_间接平差
                             s += sDelim;
                     }
                 }
-                sb.AppendLine(s);
+                sb.AppendLine(s);//AppendLine是回车后添加一行，Append是不回车
             }
-            return sb.ToString();
+            return sb.ToString();//StringBuilder转String
         }
 
-        public Matrix()
+        public Matrix()//用于初始化矩阵，即Matrix xxx = new Matrix()
         {
             cols = 1;
             rows = 1;
-            Init(rows, cols);
+            Init(rows, cols);//初始化element数组（大小）的函数，代码在下方
         }
 
-        public Matrix(Matrix other)
+        public Matrix(Matrix other)//用于获取进行运算的other矩阵的行列数，从而建立结果矩阵，即Matrix Result = New Matrix(this)//this继承无参时的构造函数
         {
             cols = other.GetNumColumns();
             rows = other.GetNumRows();
             Init(rows, cols);
-            SetData(other.element);
+            SetData(other.element);//使用深复制的原因？
         }
 
-        public Matrix(int nRows, int nCols)
+        public Matrix(int nRows, int nCols)//用于初始化矩阵
         {
             rows = nRows;
             cols = nCols;
             Init(rows, cols);
         }
 
-        public bool Init(int nRows, int nCols)
+        public bool Init(int nRows, int nCols)//通过行列数计算元素总数，然后初始化element数组
         {
             rows = nRows;
             cols = nCols;
@@ -137,60 +143,70 @@ namespace 测方向三角网_间接平差
             return true;
         }
 
-        public int GetNumColumns()
+        public int GetNumColumns()//用于获取列数的变量，只读
         {
             return cols;
         }
 
-        public int GetNumRows()
+        public int GetNumRows()//同上
         {
             return rows;
         }
 
         public void SetData(double[] value)
         {
-            element = (double[])value.Clone();
+            element = (double[])value.Clone();//Clone是深复制，直接赋值是如a = b，a的值和b一样，虽然a不同于b的变量，但两者是公用同一内存的，类似指针
+                                              //使用深复制，a = b.Clone()，这时两者在值上相等，并使用不同内存，是完全独立的变量
         }
 
-        public double GetElement(int nRow, int nCol)
+        public double GetElement(int nRow, int nCol)//同为索引器，为何不用上面功能更全的this索引器？
         {
             return element[nCol + nRow * cols];
         }
 
-        public bool SetElement(int nRow, int nCol, double value)
+        public bool SetElement(int nRow, int nCol, double value)//修改单个元素，带越界保护
         {
             if (nCol < 0 || nCol >= cols || nRow < 0 || nRow >= rows)
                 return false;
             element[nCol + nRow * cols] = value;
             return true;
         }
-        public static Matrix LoadFromTextFile(string fileName)
+        public static Matrix LoadFromTextFile(string fileName)//从文件导入矩阵（也可先把string转成文件流再导入矩阵）
+            //转换代码如下
+            /*
+            string X0 = {1,2,3,\n,4,5,6,\n,7,8,9};
+            using (StreamWriter obi = new StreamWriter("X0"))
+            {
+                obi.Write(X0);
+            }
+            Matrix Matrix_X0 = new Matrix();
+            Matrix_X0 = Matrix.LoadFromTextFile("X0");*/
         {
             StreamReader sr = new StreamReader(fileName);
             if (sr == null)
             {
                 return null;
             }
-            ArrayList stringArray = new ArrayList();
+            ArrayList stringArray = new ArrayList();//ArrayList是长度可变的数组，可存放任意类型的数据
             String line;
             while ((line = sr.ReadLine()) != null)
             {
-                stringArray.Add(line);
+                stringArray.Add(line);//一列为一个元素
             }
             sr.Close();
-            int rows = stringArray.Count;
+            int rows = stringArray.Count;//记录行数
             int cols = 0;
             if (stringArray.Count > 0)
             {
-                String[] numberString = stringArray[0].ToString().Split(',');
-                cols = numberString.Length;
+                String[] numberString = stringArray[0].ToString().Split(',');//读取第一行数据
+                cols = numberString.Length;//记录列数
             }
             else
             {
                 return null;
             }
             Matrix result = new Matrix(rows, cols);
-            for (int i = 0; i < rows; i++)
+            for (int i = 0; i < rows; i++)//录入为矩阵形式
             {
                 String[] tempData = stringArray[i].ToString().Split(',');
                 for (int j = 0; j < cols; j++)
@@ -200,7 +216,9 @@ namespace 测方向三角网_间接平差
             }
             return result;
         }
+        
         //矩阵加法
+        
         public Matrix Add(Matrix other)
         {
             if (cols != other.GetNumColumns() || rows != other.GetNumRows())
@@ -214,7 +232,9 @@ namespace 测方向三角网_间接平差
             }
             return result;
         }
+        
         //矩阵减法
+        
         public Matrix Subtract(Matrix other)
         {
             if (cols != other.GetNumColumns() || rows != other.GetNumRows())
@@ -229,7 +249,9 @@ namespace 测方向三角网_间接平差
 
             return result;
         }
+        
         //数乘以矩阵
+        
         public Matrix Multiply(double value)
         {
             Matrix result = new Matrix(this);
@@ -243,6 +265,7 @@ namespace 测方向三角网_间接平差
         }
 
         //矩阵乘法
+        
         public Matrix Multiply(Matrix other)
         {
             if (cols != other.GetNumRows())
@@ -261,7 +284,9 @@ namespace 测方向三角网_间接平差
             }
             return result;
         }
+        
         //矩阵转置
+        
         public Matrix Transpose()
         {
             Matrix Trans = new Matrix(cols, rows);
@@ -272,7 +297,9 @@ namespace 测方向三角网_间接平差
             }
             return Trans;
         }
+        
         //矩阵求逆
+        
         public Matrix InvertGaussJordan()
         {
             int i, j, k, l, u, v;
